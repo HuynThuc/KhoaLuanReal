@@ -4,18 +4,18 @@ import parse from 'html-react-parser';
 export default function TrainerCard({ trainers, onSelectTrainer }) {
   return (
     <div className="flex flex-col items-center justify-center w-full text-b">
-      <h2 className="text-xl font-bold mb-4">Danh sách huấn luyện viên</h2>
+      <h2 className="text-xl text-black mt-3 font-bold mb-4">Danh sách huấn luyện viên</h2>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap justify-center gap-4">
         {trainers.map((trainer) => (
           <div 
             key={trainer.id} 
-            className="relative z-20 w-80 p-2 mt-4 text-sm leading-tight text-white rounded-lg transform transition-transform duration-300 hover:scale-105"
+            className="relative z-20 w-full sm:w-80 md:w-64 p-2 mt-4 text-sm leading-tight text-white rounded-lg transform transition-transform duration-300 hover:scale-105"
           >
             <div className="bg-white rounded-lg py-4 shadow-[0_3px_10px_rgb(0,0,0,0.3)] hover:shadow-[rgba(0,_0,_0,_0.24)_0px_3px_8px]">
               <div className="photo-wrapper p-2">
                 <img
-                  className="w-36 h-36 rounded-full mx-auto object-cover"
+                  className="w-32 h-32 sm:w-36 sm:h-36 rounded-full mx-auto object-cover"
                   src={`/images/${trainer.image}`}
                   alt={trainer.name}
                 />

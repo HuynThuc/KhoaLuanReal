@@ -105,63 +105,75 @@ export default function WeeklySchedule() {
     };
     
     const handleSlotClick = (fullDate, hour) => {
-        const now = new Date();
-        const slotDateTime = new Date(fullDate);
-        slotDateTime.setHours(parseInt(hour));
-        
-        // Kiểm tra nếu slot đã qua
-        if (slotDateTime < now) {
-            toast.error('Không thể chọn thời gian đã qua!');
-            return;
-        }
-
-        const slot = { date: fullDate, hour };
-        const isSelected = selectedSlots.some(selectedSlot =>
-            selectedSlot.date.getTime() === fullDate.getTime() && selectedSlot.hour === hour
-        );
-    
-        if (isSelected) {
-            setSelectedSlots(prev => {
-                const newSelectedSlots = prev.filter(selectedSlot =>
-                    !(selectedSlot.date.getTime() === fullDate.getTime() && selectedSlot.hour === hour)
-                );
-                if (newSelectedSlots.length === 0) {
-                    setFirstSelectedWeek(null);
-                }
-                return newSelectedSlots;
-            });
-            return;
-        }
-    
-        if (weeks && sessionsPerWeek) {
-            const selectedCount = selectedSlots.filter(slot => 
-                slot.date.toDateString() === fullDate.toDateString()
-            ).length;
-    
-            if (selectedCount >= sessionsPerWeek) {
-                toast.error(`Bạn chỉ được chọn tối đa ${sessionsPerWeek} buổi trong tuần này!`);
-                return;
-            }
-    
-            const currentWeek = getWeekNumber(fullDate);
-    
-            if (!firstSelectedWeek && selectedSlots.length === 0) {
-                setFirstSelectedWeek(currentWeek);
-                setSelectedSlots(prev => [...prev, slot]);
-            } else {
-                const weekDiff = Math.abs(currentWeek - firstSelectedWeek);
-    
-                if (weekDiff > weeks) {
-                    toast.error(`Bạn chỉ được chọn lịch trong phạm vi ${weeks} tuần!`);
-                    return;
-                }
-    
-                setSelectedSlots(prev => [...prev, slot]);
-            }
-        } else {
-            setSelectedSlots(prev => [...prev, slot]);
-        }
-    };
+      const now = new Date();
+      const slotDateTime = new Date(fullDate);
+      slotDateTime.setHours(parseInt(hour));
+  
+      // Kiểm tra nếu slot đã qua
+      if (slotDateTime < now) {
+          toast.error('Không thể chọn thời gian đã qua!');
+          return;
+      }
+  
+      const slot = { date: fullDate, hour };
+  
+      // Tính tổng số tuần từ đầu năm đến tuần đầu tiên và tuần hiện tại
+      const currentYear = now.getFullYear();
+      const firstSelectedYear = firstSelectedWeek ? new Date(firstSelectedWeek.date).getFullYear() : null;
+  
+      const weekNumberCurrent = getWeekNumber(fullDate);
+      const weekNumberFirst = firstSelectedWeek
+          ? getWeekNumber(new Date(firstSelectedWeek.date))
+          : weekNumberCurrent;
+  
+      const weekDifference = firstSelectedYear === fullDate.getFullYear()
+          ? Math.abs(weekNumberCurrent - weekNumberFirst) // Cùng năm
+          : weekNumberCurrent + (52 - weekNumberFirst); // Khác năm (chuyển qua năm mới)
+  
+      if (firstSelectedWeek && weekDifference >= weeks) {
+          toast.error(`Bạn chỉ được chọn lịch trong phạm vi ${weeks} tuần kể từ tuần đầu tiên!`);
+          return;
+      }
+  
+      const isSelected = selectedSlots.some(selectedSlot =>
+          selectedSlot.date.getTime() === fullDate.getTime() && selectedSlot.hour === hour
+      );
+  
+      if (isSelected) {
+          setSelectedSlots(prev => {
+              const newSelectedSlots = prev.filter(selectedSlot =>
+                  !(selectedSlot.date.getTime() === fullDate.getTime() && selectedSlot.hour === hour)
+              );
+              if (newSelectedSlots.length === 0) {
+                  setFirstSelectedWeek(null);
+              }
+              return newSelectedSlots;
+          });
+          return;
+      }
+  
+      if (weeks && sessionsPerWeek) {
+          const selectedCount = selectedSlots.filter(slot =>
+              slot.date.toDateString() === fullDate.toDateString()
+          ).length;
+  
+          if (selectedCount >= sessionsPerWeek) {
+              toast.error(`Bạn chỉ được chọn tối đa ${sessionsPerWeek} buổi trong tuần này!`);
+              return;
+          }
+  
+          if (!firstSelectedWeek && selectedSlots.length === 0) {
+              setFirstSelectedWeek({ date: fullDate });
+              setSelectedSlots(prev => [...prev, slot]);
+          } else {
+              setSelectedSlots(prev => [...prev, slot]);
+          }
+      } else {
+          setSelectedSlots(prev => [...prev, slot]);
+      }
+  };
+  
+  
 
     
 
@@ -271,124 +283,123 @@ export default function WeeklySchedule() {
     };
 
     return (
-        
-        <div className="mt-20 flex flex-col items-center justify-center w-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-4 text-black flex-1">
+        <div className="mt-20 flex flex-col items-center justify-center w-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-4 text-black">
         <div className="flex items-center justify-between mb-6 w-full">
-            <button
-                onClick={prevWeek}
-                className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
-            >
-                <ChevronLeft className="w-5 h-5" />
-                TUẦN TRƯỚC
-            </button>
-    
-            <h2 className="text-lg font-medium">
-                {date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
-            </h2>
-    
-            <button
-                onClick={nextWeek}
-                className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
-            >
-                TUẦN SAU
-                <ChevronRight className="w-5 h-5" />
-            </button>
+          <button
+            onClick={prevWeek}
+            className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            TUẦN TRƯỚC
+          </button>
+      
+          <h2 className="text-lg font-medium">
+            {date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
+          </h2>
+      
+          <button
+            onClick={nextWeek}
+            className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
+          >
+            TUẦN SAU
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
-    
-        <div className="grid grid-cols-8 gap-2 w-full max-w-full ml-[130px] justify-center">
-            {weekDays.map(({ date, day, isWeekend, fullDate, isPastDate }) => (
-                <div key={date} className="bg-white">
-                    <div className={`h-16 p-2 text-center ${isWeekend ? 'bg-gray-100' : ''}`}>
-                        <div className="text-sm text-gray-500">{date}</div>
-                        <div className={`font-medium ${isWeekend ? 'text-red-500' : 'text-gray-900'}`}>{day}</div>
-                    </div>
-    
-                    {hours.map((hour) => {
-                           if (isPastDate) {
-                            return (
-                                <div key={`${date}-${hour}`} className="border-gray-200 flex flex-col gap-1 mb-1">
-                                    <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
-                                        <span className="text-sm font-semibold">{hour}</span>
-                                    </div>
-                                    <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
-                                        <span className="text-sm font-semibold">{`${hour.split(':')[0]}:30`}</span>
-                                    </div>
-                                </div>
-                            );
-                        }
-                        const isScheduled = isTimeSlotScheduled(fullDate, hour);
-                        const isBooked = isTimeSlotBooked(fullDate, hour);
-                        const isSelected = isSlotSelected(fullDate, hour);
-    
-                        // Nếu slot đã được đặt, chỉ hiển thị ô màu xám
-                        if (isBooked) {
-                            return (
-                                <div key={`${date}-${hour}`} className="border-gray-200 flex flex-col gap-1 mb-1">
-                                    <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
-                                        <span className="text-sm font-semibold">{hour}</span>
-                                    </div>
-                                    <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
-                                        <span className="text-sm font-semibold">{`${hour.split(':')[0]}:30`}</span>
-                                    </div>
-                                </div>
-                            );
-                        }
-    
-                        // Nếu có trong lịch làm việc của huấn luyện viên
-                        if (isScheduled) {
-                            return (
-                                <div
-                                    key={`${date}-${hour}`}
-                                    className={`h-[129px] cursor-pointer flex items-center justify-center mb-1 transition-colors duration-200 ${isSelected ? 'bg-orange-500 text-white' : 'bg-orange-100 hover:bg-orange-200'}`}
-                                    onClick={() => handleSlotClick(fullDate, hour)}
-                                >
-                                    <div className="text-center text-sm font-semibold w-full h-full flex items-center justify-center">
-                                        {hour}
-                                    </div>
-                                </div>
-                            );
-                        }
-    
-                        // Nếu không có trong lịch làm việc
-                        return (
-                            <div key={hour} className="border-gray-200 flex flex-col gap-1 mb-1">
-                                <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
-                                    <span className="text-sm font-semibold">{hour}</span>
-                                </div>
-                                <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
-                                    <span className="text-sm font-semibold">{`${hour.split(':')[0]}:30`}</span>
-                                </div>
-                            </div>
-                        );
-                    })}
-    
+      
+        <div className="grid grid-cols-7 gap-2 w-full max-w-full">
+          {weekDays.map(({ date, day, isWeekend, fullDate, isPastDate }) => (
+            <div key={date} className="bg-white">
+              <div className={`h-16 p-2 text-center ${isWeekend ? 'bg-gray-100' : ''}`}>
+                <div className="text-sm text-gray-500">{date}</div>
+                <div className={`font-medium ${isWeekend ? 'text-red-500' : 'text-gray-900'}`}>
+                  {day}
                 </div>
-            ))}
+              </div>
+      
+              {hours.map((hour) => {
+                if (isPastDate) {
+                  return (
+                    <div key={`${date}-${hour}`} className="border-gray-200 flex flex-col gap-1 mb-1">
+                      <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
+                        <span className="text-sm font-semibold">{hour}</span>
+                      </div>
+                      <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
+                        <span className="text-sm font-semibold">{`${hour.split(':')[0]}:30`}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                const isScheduled = isTimeSlotScheduled(fullDate, hour);
+                const isBooked = isTimeSlotBooked(fullDate, hour);
+                const isSelected = isSlotSelected(fullDate, hour);
+      
+                if (isBooked) {
+                  return (
+                    <div key={`${date}-${hour}`} className="border-gray-200 flex flex-col gap-1 mb-1">
+                      <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
+                        <span className="text-sm font-semibold">{hour}</span>
+                      </div>
+                      <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
+                        <span className="text-sm font-semibold">{`${hour.split(':')[0]}:30`}</span>
+                      </div>
+                    </div>
+                  );
+                }
+      
+                if (isScheduled) {
+                  return (
+                    <div
+                      key={`${date}-${hour}`}
+                      className={`h-[129px] cursor-pointer flex items-center justify-center mb-1 transition-colors duration-200 ${isSelected ? 'bg-orange-500 text-white' : 'bg-orange-100 hover:bg-orange-200'}`}
+                      onClick={() => handleSlotClick(fullDate, hour)}
+                    >
+                      <div className="text-center text-sm font-semibold w-full h-full flex items-center justify-center">
+                        {hour}
+                      </div>
+                    </div>
+                  );
+                }
+      
+                return (
+                  <div key={hour} className="border-gray-200 flex flex-col gap-1 mb-1">
+                    <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
+                      <span className="text-sm font-semibold">{hour}</span>
+                    </div>
+                    <div className="flex items-center justify-center w-full h-[62.5px] text-center bg-gray-300 rounded-md opacity-40 cursor-not-allowed">
+                      <span className="text-sm font-semibold">{`${hour.split(':')[0]}:30`}</span>
+                    </div>
+                  </div>
+                );
+              })}
+      
+            </div>
+          ))}
         </div>
-    
+      
         <div className="mt-4 flex gap-4 text-sm text-gray-600">
-            <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-orange-100 mr-2" />
-                <span>Có sẵn</span>
-            </div>
-            <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-gray-200 mr-2" />
-                <span>Không có sẵn</span>
-            </div>
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-orange-100 mr-2" />
+            <span>Có sẵn</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-gray-200 mr-2" />
+            <span>Không có sẵn</span>
+          </div>
         </div>
-    
+      
         <button
-            onClick={handleRegister}
-            className="mt-6 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300"
+          onClick={handleRegister}
+          className="mt-6 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300"
         >
-            Đăng ký
+          Đăng ký
         </button>
         <ToastContainer
-            position="top-right"
-            autoClose={2000}
-            hideProgressBar
+          position="top-right"
+          autoClose={2000}
+          hideProgressBar
         />
-    </div>
+      </div>
+      
     
     );
 }

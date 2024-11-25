@@ -7,11 +7,38 @@ const GymProfile = () => {
     const { user } = useContext(AuthContext);
     const [orderDetails, setOrderDetails] = useState([]);
     const [stats, setStats] = useState([]);
+    const [reviewInput, setReviewInput] = useState(''); // Lưu đánh giá tạm thời
+    const [selectedOrder, setSelectedOrder] = useState(null); // Lưu order đang được đánh giá
 
     useEffect(() => {
         console.log("Current user:", user);
     }, [user]);
 
+    const handleReviewSubmit = async (orderId) => {
+        if (!reviewInput) return;
+        try {
+            const response = await fetch(`http://localhost:3002/order/addReview`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, review: reviewInput })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error submitting review');
+            }
+
+            const updatedOrder = await response.json();
+
+            // Cập nhật orderDetails với đánh giá mới
+            setOrderDetails(prevOrders =>
+                prevOrders.map(order => order.id === orderId ? { ...order, review: updatedOrder.review } : order)
+            );
+            setReviewInput('');
+            setSelectedOrder(null); // Ẩn form sau khi gửi đánh giá
+        } catch (error) {
+            console.error('Error submitting review:', error);
+        }
+    };
     useEffect(() => {
         const fetchOrder = async () => {
             if (user && user.id) {
@@ -22,20 +49,20 @@ const GymProfile = () => {
                     }
                     const data = await response.json();
                     setOrderDetails(data.orderDetails || []);
-    
+
                     // Tính toán dữ liệu stats từ orderDetails
                     const totalSessions = data.orderDetails.length;
                     const completedSessions = data.orderDetails.filter(order => order.status === 'completed').length;
                     const canceledSessions = data.orderDetails.filter(order => order.status === 'canceled').length;
-    
+
                     // Số buổi còn lại bao gồm cả buổi bị hủy
                     const remainingSessions = totalSessions - completedSessions - canceledSessions;
                     const totalHours = completedSessions * 1; // Giả sử mỗi buổi tập là 1 giờ, bạn có thể điều chỉnh logic này.
-    
+
                     const completionRate = totalSessions > 0
                         ? `${Math.round((completedSessions / totalSessions) * 100)}%`
                         : '0%';
-    
+
                     // Cập nhật giá trị stats
                     setStats([
                         { value: remainingSessions.toString(), label: "Buổi tập còn lại" },
@@ -43,7 +70,7 @@ const GymProfile = () => {
                         { value: completionRate, label: "Tỷ lệ hoàn thành" },
                         { value: totalHours.toString(), label: "Giờ tập" }
                     ]);
-    
+
                 } catch (error) {
                     console.error("Error fetching order details:", error);
                 }
@@ -51,7 +78,7 @@ const GymProfile = () => {
         };
         fetchOrder();
     }, [user]);
-    
+
 
     console.log('Order details:', orderDetails);
 
@@ -137,22 +164,63 @@ const GymProfile = () => {
                             <div className="divide-y">
                                 {orderDetails.map((order, index) => (
                                     <div key={index} className="py-4 flex justify-between items-center">
-                                        <div>{order.sessionDate} - {order.sessionTime} - HLV: {order.trainer.trainerName} - Gói tập - {order.gymPackage.name} </div>
-                                        <span className={`px-3 py-1 rounded-md text-sm 
-    ${order.status === 'completed' ? 'bg-green-100 text-green-800'
-                                                : order.status === 'canceled' ? 'bg-red-100 text-red-800'
-                                                    : 'bg-blue-100 text-blue-800'}`}>
-                                            {order.status === 'completed' ? 'Đã hoàn thành'
-                                                : order.status === 'canceled' ? 'Đã hủy'
-                                                    : 'Chưa sử dụng'}
-                                        </span>
+                                        <div>
+                                            {order.sessionDate} - {order.sessionTime} - HLV: {order.trainer.trainerName} - Gói tập - {order.gymPackage.name}
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span
+                                                className={`px-3 py-1 rounded-md text-sm 
+                                    ${order.status === 'completed' ? 'bg-green-100 text-green-800'
+                                                        : order.status === 'canceled' ? 'bg-red-100 text-red-800'
+                                                            : 'bg-blue-100 text-blue-800'}`}
+                                            >
+                                                {order.status === 'completed' ? 'Đã hoàn thành'
+                                                    : order.status === 'canceled' ? 'Đã hủy'
+                                                        : 'Chưa sử dụng'}
+                                            </span>
 
+                                            {/* Hiển thị nút đánh giá nếu trạng thái là 'completed' */}
+                                            {order.status === 'completed' && !order.review && (
+                                                <button
+                                                    onClick={() => setSelectedOrder(order.id)}
+                                                    className="text-blue-600 hover:underline text-sm"
+                                                >
+                                                    Đánh giá
+                                                </button>
+                                            )}
+
+                                            {/* Hiển thị đánh giá nếu đã tồn tại */}
+                                            {order.review && (
+                                                <div className="text-sm text-gray-600 italic">
+                                                    Đánh giá: "{order.review}"
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Form đánh giá */}
+                            {selectedOrder && (
+                                <div className="mt-4">
+                                    <textarea
+                                        className="w-full border border-gray-300 rounded-md p-2"
+                                        placeholder="Nhập đánh giá của bạn..."
+                                        value={reviewInput}
+                                        onChange={(e) => setReviewInput(e.target.value)}
+                                    />
+                                    <button
+                                        onClick={() => handleReviewSubmit(selectedOrder)}
+                                        className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                                    >
+                                        Gửi đánh giá
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
+
 
                 {activeTab === 'settings' && (
                     <div className="bg-white rounded-lg p-6 shadow-sm">

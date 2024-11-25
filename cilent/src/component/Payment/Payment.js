@@ -65,7 +65,7 @@ const BookingConfirmation = () => {
       setDiscountMessage('Mã giảm giá này đã được áp dụng!');
       return;
     }
-
+  
     try {
       const response = await fetch(`http://localhost:3002/promotion/validate/${user.id}`, {
         method: 'POST',
@@ -73,14 +73,16 @@ const BookingConfirmation = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          code: formData.discountCode // Gửi mã giảm giá
+          code: formData.discountCode,
+          gymPackageId: planId,            // Mã giảm giá
+        
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+  
       const promotion = await response.json();
       if (promotion.message === 'Mã giảm giá hợp lệ') {
         const discountedPrice = (originalPrice * (100 - promotion.promotion.discountPercent)) / 100;
@@ -97,6 +99,16 @@ const BookingConfirmation = () => {
       setDiscountMessage('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
     }
   };
+
+  // Nhấn xóa mã giảm giá
+const handleRemoveDiscount = () => {
+  setFinalPrice(originalPrice); // Đặt lại giá về ban đầu
+  setAppliedCode(null); // Xóa mã đã áp dụng
+  setIsDiscountApplied(false); // Đánh dấu mã chưa được áp dụng
+  setFormData((prev) => ({ ...prev, discountCode: '' })); // Xóa mã giảm giá trong form
+  setDiscountMessage(''); // Xóa thông báo
+};
+  
 
 
 
@@ -348,18 +360,6 @@ const BookingConfirmation = () => {
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="cash"
-                  checked={formData.paymentMethod === 'cash'}
-                  className="mr-3"
-                  onChange={handleChange}
-                />
-                <span>Thanh toán tiền mặt</span>
-              </label>
-
-              <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition duration-200">
-                <input
-                  type="radio"
-                  name="paymentMethod"
                   value="momo"
                   checked={formData.paymentMethod === 'momo'}
                   className="mr-3"
@@ -375,12 +375,9 @@ const BookingConfirmation = () => {
         {/* Right Column - Booking Details */}
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Thông tin đặt chỗ</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Thông tin đặt lịch</h2>
             <div className="space-y-3">
-              <div className="flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-gray-600" />
-                <span className="text-gray-600">Thời gian:</span>
-              </div>
+              
 
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2 text-gray-600" />
@@ -428,6 +425,7 @@ const BookingConfirmation = () => {
               <Tag className="w-5 h-5 mr-2 text-gray-600" />
               Mã giảm giá
             </label>
+            
             <div className="flex">
               <input
                 type="text"

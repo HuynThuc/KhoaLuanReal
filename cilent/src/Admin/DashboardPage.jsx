@@ -3,9 +3,9 @@ import axios from 'axios';
 import parse from 'html-react-parser';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { LaptopOutlined, NotificationOutlined, UserOutlined, TeamOutlined, LineChartOutlined, PlusOutlined, GiftOutlined } from '@ant-design/icons';
+import { LaptopOutlined, NotificationOutlined, UserOutlined, TeamOutlined, LineChartOutlined, PlusOutlined, GiftOutlined, CalendarOutlined } from '@ant-design/icons';
 import { EditOutlined, DeleteOutlined, UploadOutlined, SendOutlined } from '@ant-design/icons';
-import { Avatar, Breadcrumb, Layout, Menu, Typography, theme, Table, Modal, Form, Input, Button, Select, Upload, message, DatePicker, TimePicker } from 'antd';
+import { Avatar, Breadcrumb, Layout, Menu, Typography, theme, Table, Modal, Form, Input, Button, Select, Upload, message, DatePicker, TimePicker, Row, Col } from 'antd';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import CustomQuillEditor from './CustomReactQuill';
@@ -29,11 +29,6 @@ const items2 = [
         key: 'sub4',
         icon: <LineChartOutlined />, // Có thể dùng biểu tượng khác nếu cần
         label: 'Quản lý Thống Kê', // Thêm mục quản lý thống kê
-    },
-    {
-        key: 'sub7',
-        icon: <LineChartOutlined />, // Có thể dùng biểu tượng khác nếu cần
-        label: 'Quét mã', // Thêm mục quản lý thống kê
     },
     {
         key: 'sub1',
@@ -61,7 +56,7 @@ const items2 = [
         label: 'Quản lý Huấn Luyện Viên',
         children: [
             { key: 'sub5-1', label: 'Huấn luyện viên' },
-            { key: 'sub5-2', label: 'Thời gian rảnh của HLV' },
+
         ],
     },
     {
@@ -76,11 +71,9 @@ const items2 = [
     },
     {
         key: 'sub7',
-        icon: <GiftOutlined />,
-        label: 'Quét mã',
-       
-
-    }
+        icon: <LineChartOutlined />, // Có thể dùng biểu tượng khác nếu cần
+        label: 'Quét mã', // Thêm mục quản lý thống kê
+    },
 ];
 
 
@@ -96,6 +89,7 @@ const DashboardPage = () => {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [addModalVisible, setAddModalVisible] = useState(false);
     const [selectTypeModalVisible, setSelectTypeVisible] = useState(false);
+    const [addScheduleModalVisible, setAddScheduleModalVisible] = useState(false);
 
     const [period, setPeriod] = useState('weekly');
 
@@ -104,11 +98,11 @@ const DashboardPage = () => {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [selectedPromotionId, setSelectedPromotionId] = useState(null); // Trạng thái cho mã giảm giá
 
-    const [orderModalVisible, setOrderModalVisible] = useState(false);
-    const [recordToOrder, setRecordOrder] = useState(null);
+    const [scheduleModalVisible, setscheduleModalVisible] = useState(false);
+    const [recordToSchedule, setRecordSchedule] = useState(null);
     const [recordToEdit, setRecordToEdit] = useState(null);
     const [recordToDelete, setRecordToDelete] = useState(null);
-    const [selectedMenuKey, setSelectedMenuKey] = useState('sub1');
+    const [selectedMenuKey, setSelectedMenuKey] = useState('sub4');
     const [dataSource, setDataSource] = useState([]);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -119,6 +113,10 @@ const DashboardPage = () => {
     const [service, setService] = useState([]);
     const [trainer, setTrainer] = useState([]);
     const [promotion, setPromotion] = useState([]);
+    const [trainerSchedule, setTrainerSchedule] = useState([])
+    const [selectedTrainerId, setSelectedTrainerId] = useState(null);
+
+    const [selectedDay, setSelectedDay] = useState(null);
 
 
 
@@ -155,7 +153,9 @@ const DashboardPage = () => {
         if (date) {
             const dayNumber = date.day(); // Lấy số ngày trong tuần (0 = Chủ Nhật)
             const dayOfWeekNumber = getDayOfWeekNumber(dayNumber);
-            const dayName = getDayName(dayNumber); // Lấy tên ngày tương ứng
+            const dayName = getDayName(dayNumber);
+
+            setSelectedDay(dayName);// Lấy tên ngày tương ứng
 
             // Cập nhật giá trị vào form
             form.setFieldsValue({
@@ -184,11 +184,6 @@ const DashboardPage = () => {
 
 
 
-
-
-
-
-
     const validatePrice = (_, value) => {
         if (value < 0) {
             return Promise.reject(new Error('Vui lòng nhập giá hợp lệ!'));
@@ -196,6 +191,8 @@ const DashboardPage = () => {
         return Promise.resolve();
     };
 
+
+    //Lấy dịch vụ
     const fetchService = async () => {
 
         try {
@@ -212,8 +209,27 @@ const DashboardPage = () => {
         fetchService();
     }, []);
 
+    //Lấy lịch trình theo trainerId
+    useEffect(() => {
+        const fetchTrainerSchedule = async () => {
+            if (!selectedTrainerId) return; // Nếu chưa có trainerId thì không gọi API
 
+            try {
+                const response = await fetch(`http://localhost:3002/schedule/getschedulesbyTrainer/${selectedTrainerId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
+                const schedules = await response.json();
+                console.log("Trainer schedules:", schedules); // Kiểm tra dữ liệu trả về
+                setTrainerSchedule(schedules); // Lưu lịch trình vào state
+            } catch (error) {
+                console.error("Error fetching trainer schedules:", error);
+            }
+        };
+
+        fetchTrainerSchedule();
+    }, [selectedTrainerId]); // Gọi lại mỗi khi selectedTrainerId thay đổi
 
 
     //Lấy package
@@ -241,12 +257,12 @@ const DashboardPage = () => {
 
 
 
-
+    //Lấy user
     const fetchUser = async () => {
         console.log("Fetching user..."); // Kiểm tra xem đoạn code có chạy đến đây không
 
         try {
-            const response = await fetch('http://localhost:3002/auth/getAllUser');
+            const response = await fetch('http://localhost:3002/auth/users');
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -269,6 +285,7 @@ const DashboardPage = () => {
     }, []);
 
 
+    //Lấy khuyến mãi
     const fetchPromotion = async () => {
         console.log("Fetching user..."); // Kiểm tra xem đoạn code có chạy đến đây không
 
@@ -296,6 +313,7 @@ const DashboardPage = () => {
     }, []);
 
 
+    //Lấy trainer
     const fetchTrainer = async () => {
         try {
             const response = await fetch('http://localhost:3002/trainer/getAllTrainers');
@@ -315,6 +333,10 @@ const DashboardPage = () => {
     useEffect(() => {
         fetchTrainer();
     }, []);
+
+    console.log('id', selectedTrainerId)
+
+
 
     //Thêm loại sản phẩm
     const addService = async (serviceData) => {
@@ -357,23 +379,47 @@ const DashboardPage = () => {
         }
     };
 
-    //Thêm giờ rảnh
-    const addSchedule = async (scheduleData) => {
+    const handleAddSchedule = async () => {
         try {
-            const response = await axios.post('http://localhost:3002/schedule/addTrainerSchedule', scheduleData, {
-                headers: {
-                    'Content-Type': 'application/json' // Đảm bảo header Content-Type là application/json khi gửi JSON
+            // Validate form và lấy giá trị nhập
+            const values = await form.validateFields();
+
+            // Chuẩn bị dữ liệu để gửi
+            const scheduledData = {
+                date: values.date ? values.date.format("YYYY-MM-DD") : null,
+                start_time: values.start_time ? values.start_time.format("HH:mm") : null,
+                end_time: values.end_time ? values.end_time.format("HH:mm") : null,
+                day_of_week: values.day_of_week || null,
+                trainerId: values.trainerId || null
+            };
+
+            // Gửi dữ liệu tới API
+            const response = await axios.post(
+                'http://localhost:3002/schedule/addTrainerSchedule',
+                scheduledData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json', // Đảm bảo header JSON
+                    },
                 }
-            });
+            );
+
             // Xử lý khi request thành công
             console.log('Thêm thành công:', response.data);
+            message.success('Thêm lịch trình thành công!');
 
-
-            // Cập nhật state hoặc thực hiện các hành động khác sau khi thêm thành công
-            // Tải lại danh sách dịch vụ
+            // Đóng modal sau khi thêm thành công
+            setAddScheduleModalVisible(false);
+            form.resetFields();
         } catch (error) {
-            // Xử lý khi có lỗi xảy ra
-            console.error('Lỗi khi thêm:', error);
+            // Xử lý lỗi form validation
+            if (error?.name === 'ValidationError') {
+                message.error('Vui lòng điền đầy đủ thông tin!');
+            } else {
+                // Xử lý lỗi khi gửi request
+                message.error('Có lỗi xảy ra khi thêm lịch trình');
+                console.error(error);
+            }
         }
     };
 
@@ -423,10 +469,11 @@ const DashboardPage = () => {
     const handleEdit = (record) => {
         setRecordToEdit(record);
         form.setFieldsValue(record);
+        setSelectedTrainerId(record.id);
         setEditModalVisible(true);
     };
 
-    // Khi nhấn vào nút Order
+
 
     //nút xóa
     const handleDelete = (record) => {
@@ -434,9 +481,17 @@ const DashboardPage = () => {
         setDeleteModalVisible(true);
     };
 
+    const handleSchedule = (record) => {
+        form.setFieldsValue(record);
+        setSelectedTrainerId(record.id);
+        setRecordSchedule(record);
+        setscheduleModalVisible(true);
+    };
 
 
 
+
+    //Hàm ok khi edit
     const handleEditModalOk = () => {
         form.validateFields().then(values => {
             if (selectedMenuKey === 'sub2-2') {
@@ -501,9 +556,35 @@ const DashboardPage = () => {
                         message.error('Cập nhật thất bại. Vui lòng thử lại!');
                     });
 
-            } else {
-                console.log('Điều kiện khác, không phải sub2-2');
+            } else if (selectedMenuKey === 'sub2-1') {
+                const id = recordToEdit.id;
+                // Dữ liệu gói tập
+                const gymPackageData = {
+                    name: values.name,
+                    price: values.price,
+                    description: values.description,
+                    weeks: values.weeks,
+                    sessionsPerWeek: values.sessionsPerWeek,
+                    durationInMonths: values.durationInMonths,
+                    serviceId: values.serviceId
+                };
+
+
+                setAddModalVisible(false);
+
+                // Gửi yêu cầu PUT với dữ liệu gói tập
+                axios.put(`http://localhost:3002/gymPackage/updateGymPackage/${id}`, gymPackageData)
+                    .then(response => {
+                        message.success('Cập nhật gói tập thành công!');
+                        setEditModalVisible(false);
+                        fetchGymPackage(); // Tải lại danh sách gói tập sau khi cập nhật
+                    })
+                    .catch(error => {
+                        console.error('Có lỗi xảy ra:', error);
+                        message.error('Cập nhật thất bại. Vui lòng thử lại!');
+                    });
             }
+
         }).catch(info => {
             console.log('Validate Failed:', info);
         });
@@ -511,7 +592,7 @@ const DashboardPage = () => {
 
 
 
-
+    //Hàm ok thì thêm mới
     const handleAddModalOk = () => {
         form.validateFields().then(values => {
             if (selectedMenuKey === 'sub2-1') {
@@ -568,20 +649,9 @@ const DashboardPage = () => {
                 });
             } else if (selectedMenuKey === 'sub5-2') {
 
-                const scheduledData = {
-                    date: values.date.format("YYYY-MM-DD"),
-                    start_time: values.start_time ? values.start_time.format("HH:mm") : null,
-                    end_time: values.end_time ? values.end_time.format("HH:mm") : null,
-                    day_of_week: values.day_of_week,
-                    trainerId: values.trainerId
-                };
-
-                // Thêm dữ liệu và cập nhật state trực tiếp
-                addSchedule(scheduledData)
-
-
+                handleAddSchedule();
             } else if (selectedMenuKey === 'sub6-1') {
-                // Dữ liệu gói tập
+                //Khuyến mãi
                 const promotionData = {
                     name: values.name,
                     description: values.description,
@@ -590,6 +660,7 @@ const DashboardPage = () => {
                     type: values.type,
                     startDate: values.startDate.format("YYYY-MM-DD"),
                     endDate: values.endDate.format("YYYY-MM-DD"),
+                    gym_package_id: values.gym_package_id
                 };
 
                 // Thêm dữ liệu và cập nhật state trực tiếp
@@ -658,7 +729,8 @@ const DashboardPage = () => {
         setDeleteModalVisible(false);
         setAddModalVisible(false);
         setSelectTypeVisible(false);
-        setOrderModalVisible(false)
+        setscheduleModalVisible(false)
+
     };
 
 
@@ -680,20 +752,28 @@ const DashboardPage = () => {
             case 'sub5-1':
                 setDataSource(trainer);
                 break;
+            case 'sub5-2':
+                setDataSource(trainerSchedule);
+                break;
             case 'sub6-1':
                 setDataSource(promotion);
-
-
                 break;
             default:
                 break;
         }
-    }, [selectedMenuKey, service, user, trainer, promotion]);
+    }, [selectedMenuKey, service, user, trainer, trainerSchedule, promotion]);
 
     const handleAddNewRecord = () => {
         setAddModalVisible(true);
         form.resetFields();
     };
+
+    const handleOpenAddScheduleModal = () => {
+        form.setFieldsValue({ trainerId: selectedTrainerId }); // Gán giá trị ID huấn luyện viên
+        setAddScheduleModalVisible(true);
+    };
+
+
 
     //nút xóa
     const handleSelectType = () => {
@@ -773,8 +853,6 @@ const DashboardPage = () => {
             ),
         },
     ];
-
-
 
     const gymPackageColums = [
         {
@@ -856,10 +934,8 @@ const DashboardPage = () => {
             key: 'image',
             render: (text, record) => (
                 <img src={`/images/${record.image}`} alt={record.packageName} style={{ maxWidth: '200px' }} />
-
             ),
         },
-
         {
             title: 'Actions',
             dataIndex: '',
@@ -868,6 +944,7 @@ const DashboardPage = () => {
                 <span>
                     <Button type="link" icon={<EditOutlined />} style={{ marginRight: 16 }} onClick={() => handleEdit(record)}>Edit</Button>
                     <Button type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record)}>Delete</Button>
+                    <Button type="link" icon={<CalendarOutlined />} onClick={() => handleSchedule(record)}>Date</Button>
                 </span>
             ),
         },
@@ -907,7 +984,6 @@ const DashboardPage = () => {
         },
     ];
 
-
     const promotionColumns = [
         {
             title: 'Tên',
@@ -944,6 +1020,7 @@ const DashboardPage = () => {
             dataIndex: 'type',
             key: 'type',
         },
+
         {
             title: 'Actions',
             dataIndex: '',
@@ -990,13 +1067,6 @@ const DashboardPage = () => {
     };
 
 
-
-
-
-
-
-
-
     //lấy bảng
     const getColumns = () => {
         switch (selectedMenuKey) {
@@ -1008,8 +1078,6 @@ const DashboardPage = () => {
                 return serviceColumns;
             case 'sub5-1':
                 return trainerColumns;
-            case 'sub5-2':
-                return trainerScheduleColumns;
             case 'sub6-1':
                 return promotionColumns;
             case 'sub6-2':
@@ -1024,12 +1092,12 @@ const DashboardPage = () => {
     } = theme.useToken();
 
     return (
-        <Layout className="min-h-screen">
+        <Layout className="min-h-screen bg-gray-900 text-white">
             {/* Modern Header */}
-            <Header className="flex items-center justify-between px-6 h-16 bg-secondary border-b border-gray-800">
+            <Header className="flex items-center justify-between px-6 h-16 bg-gray-800 border-b border-gray-700">
                 <div className="flex items-center gap-6">
                     <img
-                        src="/api/placeholder/140/40"
+                        src="/images/logo.png"
                         alt="Gym Logo"
                         className="h-8 brightness-0 invert"
                     />
@@ -1037,15 +1105,15 @@ const DashboardPage = () => {
                         theme="dark"
                         mode="horizontal"
                         defaultSelectedKeys={['2']}
-                        className="bg-transparent border-0 min-w-[400px]"
+                        className="bg-transparent border-0 min-w-[400px] text-gray-300"
                     />
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-primary">
+                <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-700">
                     <Avatar
                         size={36}
                         icon={<UserOutlined />}
-                        className="bg-accent"
+                        className="bg-gray-600"
                     />
                     <Text className="text-white font-semibold">
                         Trần Huỳnh Thưc
@@ -1054,29 +1122,25 @@ const DashboardPage = () => {
             </Header>
 
             {/* Main Content Area */}
-            <Content className="p-6 bg-background">
-                <Breadcrumb className="mb-4 text-gray-600" />
+            <Content className="p-6 bg-gray-900">
+                <Breadcrumb className="mb-4 text-gray-400" />
 
-                <Layout className="rounded-xl overflow-hidden shadow-lg bg-white">
+                <Layout className="rounded-xl overflow-hidden shadow-lg bg-gray-800">
                     {/* Sidebar */}
-                    <Sider
-                        className="bg-secondary p-4"
-                        width={280}
-                    >
+                    <Sider className="bg-gray-800 p-4" width={280}>
                         <Menu
                             mode="inline"
-                            defaultSelectedKeys={['sub1']}
-                            defaultOpenKeys={['sub1']}
-                            className="border-0 bg-transparent"
+                            defaultSelectedKeys={['sub4']}
+                            defaultOpenKeys={['sub4']}
+                            className="border-0 bg-transparent text-gray-300"
                             items={items2}
                             onClick={handleMenuClick}
                             theme="dark"
                         />
-
                     </Sider>
 
                     {/* Page Content */}
-                    <Content className="p-8 bg-white">
+                    <Content className="p-8 bg-gray-900 text-gray-200">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex gap-4">
                                 {/* Chỉ hiển thị nút "Add New" nếu không phải là sub6-2 */}
@@ -1085,7 +1149,7 @@ const DashboardPage = () => {
                                         type="primary"
                                         icon={<PlusOutlined />}
                                         onClick={handleAddNewRecord}
-                                        className="h-10 px-4 bg-primary hover:bg-primary/90 font-medium flex items-center gap-2"
+                                        className="h-10 px-4 bg-blue-600 hover:bg-blue-500 font-medium flex items-center gap-2"
                                     >
                                         Add New
                                     </Button>
@@ -1097,7 +1161,7 @@ const DashboardPage = () => {
                                         type="primary"
                                         icon={<SendOutlined />}
                                         onClick={handleSelectType}
-                                        className="h-10 px-4 bg-primary hover:bg-primary/90 font-medium flex items-center gap-2"
+                                        className="h-10 px-4 bg-blue-600 hover:bg-blue-500 font-medium flex items-center gap-2"
                                     >
                                         Gửi mã giảm giá
                                     </Button>
@@ -1105,10 +1169,12 @@ const DashboardPage = () => {
                             </div>
                         </div>
                         {selectedMenuKey === 'sub7' ? (
-                            <QRCodeScanner onScan={(data) => {
-                                console.log('Quét mã thành công:', data);
-                                // Xử lý dữ liệu quét được tại đây
-                            }} />
+                            <QRCodeScanner
+                                onScan={(data) => {
+                                    console.log('Quét mã thành công:', data);
+                                    // Xử lý dữ liệu quét được tại đây
+                                }}
+                            />
                         ) : selectedMenuKey === 'sub4' ? (
                             <RevenueChart period={period} /> // Gọi component biểu đồ tại đây
                         ) : (
@@ -1126,24 +1192,25 @@ const DashboardPage = () => {
                                     ],
                                 }}
                                 rowKey="id" // Đảm bảo dữ liệu người dùng có trường 'id'
-                                className="shadow-sm rounded-lg overflow-hidden"
+                                className="shadow-sm rounded-lg overflow-hidden bg-gray-800 text-gray-200"
                             />
                         )}
                     </Content>
-
-
                 </Layout>
             </Content>
 
             {/* Footer */}
-            <Footer className="text-center text-gray-600 bg-white border-t">
+            <Footer className="text-center text-gray-400 bg-gray-800 border-t border-gray-700">
                 PTGAMING ©{new Date().getFullYear()} Created by Ant UED
             </Footer>
+
+
             <Modal
                 title="Chỉnh Sửa"
                 visible={editModalVisible}
                 onOk={handleEditModalOk}
                 onCancel={handleModalCancel}
+                width={1000}
             >
                 <Form form={form} layout="vertical">
                     {selectedMenuKey === 'sub1' && (
@@ -1164,37 +1231,73 @@ const DashboardPage = () => {
                     )}
                     {selectedMenuKey === 'sub2-1' && (
                         <>
-                            <Form.Item name="ten_sanpham" label="Tên sản phẩm" rules={[{ required: true, message: 'Please input the name!' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item name="mo_ta" label="Mô tả" rules={[{ required: true, message: 'Please input the price!' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item name="gia" label="Giá" rules={[{ required: true, message: 'Please input the stock!' }]}>
-                                <Input />
-                            </Form.Item>
                             <Form.Item
-                                name="id_loaisanpham"
-                                label="Loại sản phẩm"
-                                rules={[{ required: true, message: 'Please select a category!' }]}
+                                name="name"
+                                label="Tên gói"
+                                rules={[{ required: true, message: 'Vui lòng nhập tên gói' }]}
+                            >
+                                <Input />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="description"
+                                label="Mô tả"
+                                rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+                            >
+                                <CustomQuillEditor
+                                    placeholder="Mô tả sản phẩm"
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="price"
+                                label="Giá"
+                                rules={[
+                                    { required: true, message: 'Vui lòng nhập giá' },
+                                    { validator: validatePrice }
+                                ]}
+                            >
+                                <Input type="number" />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="weeks"
+                                label="Số tuần"
+
+                            >
+                                <Input type="number" min={1} />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="sessionsPerWeek"
+                                label="Số buổi mỗi tuần"
+
+                            >
+                                <Input type="number" min={1} />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="durationInMonths"
+                                label="Thời gian gói tập (tháng)"
+
+                            >
+                                <Input type="number" min={1} />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="serviceId"
+                                label="Loại dịch vụ"
                             >
                                 <Select
-                                    placeholder="Chọn loại sản phẩm"
-
+                                    placeholder="Chọn dịch vụ"
                                 >
-                                    {category.map((category) => (
-                                        <Option key={category.id_loaisanpham} value={category.id_loaisanpham}>
-                                            {category.ten_loaisp}
+                                    <Option value={undefined}>Không chọn dịch vụ</Option> {/* Tùy chọn không chọn */}
+                                    {service.map((serviceItem) => (
+                                        <Option key={serviceItem.id} value={serviceItem.id}>
+                                            {serviceItem.serviceName}
                                         </Option>
                                     ))}
                                 </Select>
-                            </Form.Item>
-                            <Form.Item name="anh" label="anh" rules={[{ required: true, message: 'Please input the stock!' }]}>
-                                <Upload
-
-                                >
-                                    <Button icon={<UploadOutlined />}>Click để tải lên</Button>
-                                </Upload>
                             </Form.Item>
                         </>
                     )}
@@ -1251,53 +1354,60 @@ const DashboardPage = () => {
                     )}
                     {selectedMenuKey === 'sub5-1' && (
                         <>
-                            <Form.Item name="name" label="Tên HLV" rules={[{ required: true, message: 'Vui lòng nhập tên HLV' }]}>
-                                <Input />
+                            <Row gutter={16}>
+                                {/* Form chỉnh sửa thông tin huấn luyện viên */}
+                                <Col span={12}>
+                                    <Form.Item name="trainerName" label="Tên HLV" rules={[{ required: true, message: 'Vui lòng nhập tên HLV' }]}>
+                                        <Input />
+                                    </Form.Item>
+                                    <Form.Item name="bio" label="Thông tin" rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}>
+                                        <CustomQuillEditor placeholder="Nội dung" />
+                                    </Form.Item>
+                                    <Form.Item name="experience_years" label="Kinh nghiệm" rules={[{ required: true, message: 'Vui lòng nhập kinh nghiệm' }]}>
+                                        <Input />
+                                    </Form.Item>
+                                    <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng nhập giới tính' }]}>
+                                        <Input />
+                                    </Form.Item>
+                                    <Form.Item name="serviceId" label="Dịch vụ" rules={[{ required: true, message: 'Vui lòng chọn dịch vụ' }]}>
+                                        <Select placeholder="Chọn dịch vụ">
+                                            {service.map((service) => (
+                                                <Option key={service.id} value={service.serviceId}>
+                                                    {service.serviceName}
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                    <Form.Item name="file" label="Ảnh" rules={[{ required: true, message: 'Vui lòng tải lên một hình ảnh!' }]}>
+                                        <Upload beforeUpload={() => false} listType="picture" onChange={(info) => form.setFieldsValue({ file: info })}>
+                                            <Button icon={<UploadOutlined />}>Click để tải lên</Button>
+                                        </Upload>
+                                    </Form.Item>
+                                </Col>
 
-                            </Form.Item>
-                            <Form.Item name="bio" label="Thông tin" rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}>
-                                <CustomQuillEditor
-                                    placeholder="Nội dung"
-                                />
-                            </Form.Item>
-                            <Form.Item name="experience_years" label="Kinh nghiệm" rules={[{ required: true, message: 'Vui lòng nhập kinh nghiệm' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng nhập giới tính' }]}>
-                                <Input />
+                                {/* Bảng lịch trình của huấn luyện viên */}
+                                <Col span={12}>
+                                    <Typography.Title level={5}>Lịch trình</Typography.Title>
+                                    <Table dataSource={trainerSchedule} columns={trainerScheduleColumns} rowKey="id" pagination={false} />
+                                    <Button
+                                        type="dashed"
+                                        style={{ marginTop: 16 }}
+                                        icon={<PlusOutlined />}
+                                        onClick={() => {
+                                            setAddScheduleModalVisible(true); // Mở modal thêm lịch trình khi nhấn nút
+                                        }}
+                                    >
+                                        Thêm lịch trình
+                                    </Button>
+                                </Col>
+                            </Row>
 
-                            </Form.Item>
-                            <Form.Item
-                                name="serviceId"
-                                label="Dịch vụ"
-                                rules={[{ required: true, message: 'Vui lòng chọn dịch vụ' }]}
-                            >
-                                <Select
-                                    placeholder="Chọn dịch vụ"
-
-                                >
-                                    {service.map((service) => (
-                                        <Option key={service.id} value={service.serviceId}>
-                                            {service.serviceName}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                            <Form.Item name="file" label="Ảnh" rules={[{ required: true, message: 'Vui lòng tải lên một hình ảnh!' }]}>
-                                <Upload
-                                    beforeUpload={() => false} // Ngăn chặn tự động tải lên
-                                    listType="picture"
-                                    onChange={info => form.setFieldsValue({ file: info })}
-                                >
-                                    <Button icon={<UploadOutlined />}>Click để tải lên</Button>
-                                </Upload>
-
-                            </Form.Item>
 
                         </>
-
-
                     )}
+
+
+
                 </Form>
             </Modal>
 
@@ -1522,9 +1632,10 @@ const DashboardPage = () => {
                                 rules={[{ required: true, message: 'Vui lòng nhập thứ!' }]}
                             >
                                 <Input
-                                    readOnly
+
                                     className="w-full bg-gray-50"
                                     placeholder="Tự động điền khi chọn ngày"
+                                    value={selectedDay || ''}  // Gán giá trị cho Input, nếu selectedDay không có thì để là chuỗi rỗng
                                 />
                             </Form.Item>
 
@@ -1661,6 +1772,21 @@ const DashboardPage = () => {
                                     <Option value="special">Dịp lễ</Option>
                                 </Select>
                             </Form.Item>
+                            <Form.Item
+                                name="gym_package_id"
+                                label="Gói tập"
+                            >
+                                <Select
+                                    placeholder="Chọn gói tập"
+                                    className="w-full"
+                                >
+                                    {gymPackage.map((gymPackage) => (
+                                        <Option key={gymPackage.id} value={gymPackage.gym_package_id}>
+                                            {gymPackage.name}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
                         </>
 
 
@@ -1670,6 +1796,115 @@ const DashboardPage = () => {
                 </Form>
             </Modal>
 
+            <Modal
+                title="Schedule"
+                onOk={handleDeleteModalOk}
+                visible={scheduleModalVisible}
+                onCancel={handleModalCancel}
+                // Không hiển thị các nút footer nếu không cần thiết
+                width={1250} // Đặt chiều rộng của Modal nếu cần
+            >
+                <Table dataSource={trainerSchedule} columns={trainerScheduleColumns} rowKey="id" pagination={false} />
+                <Button
+                    type="dashed"
+                    style={{ marginTop: 16 }}
+                    icon={<PlusOutlined />}
+                    onClick={handleOpenAddScheduleModal}
+                // Mở modal thêm lịch trình
+                >
+                    Thêm lịch trình
+                </Button>
+
+
+            </Modal>
+            <Modal
+                title="Thêm lịch trình"
+                visible={addScheduleModalVisible}
+                onCancel={() => setAddScheduleModalVisible(false)} // Đóng modal khi nhấn Cancel
+                onOk={() => form.submit()} // Submit form khi nhấn OK
+            >
+                <Form
+                    form={form} // Liên kết với instance form để quản lý các trường
+                    layout="vertical" // Tùy chọn layout của form
+                    onFinish={handleAddSchedule} // Hàm xử lý khi form được submit
+                >
+                    <Form.Item
+                        name="date"
+                        label="Ngày"
+                        rules={[{ required: true, message: 'Vui lòng chọn ngày!' }]}
+                    >
+                        <DatePicker
+                            format="YYYY-MM-DD"
+                            onChange={handleDateChange}
+                            className="w-full"
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="day_of_week_display" // Trường hiển thị tên thứ
+                        label="Thứ"
+                        rules={[{ required: true, message: 'Vui lòng nhập thứ!' }]}
+                    >
+                        <Input
+                            readOnly
+                            className="w-full bg-gray-50"
+                            placeholder="Tự động điền khi chọn ngày"
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="day_of_week" // Trường lưu số tương ứng
+                        style={{ display: 'none' }} // Ẩn trường này khỏi giao diện
+                    >
+                        <Input />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="start_time"
+                        label="Thời gian bắt đầu"
+                        rules={[{ required: true, message: 'Vui lòng nhập thời gian bắt đầu!' }]}
+                        help="Chọn thời gian bắt đầu trong khoảng 9:00 đến 22:00"
+                    >
+                        <TimePicker
+                            format="HH:mm"
+                            minuteStep={30}
+                            disabledHours={() => {
+                                const hours = [];
+                                for (let i = 0; i < 24; i++) {
+                                    if (i < 9 || i > 21) hours.push(i);
+                                }
+                                return hours;
+                            }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="end_time"
+                        label="Thời gian kết thúc"
+                        rules={[{ required: true, message: 'Vui lòng nhập thời gian kết thúc!' }]}
+                        help="Chọn thời gian kết thúc trong khoảng 9:00 đến 22:00"
+                    >
+                        <TimePicker
+                            format="HH:mm"
+                            minuteStep={30}
+                            disabledHours={() => {
+                                const hours = [];
+                                for (let i = 0; i < 24; i++) {
+                                    if (i < 9 || i > 21) hours.push(i);
+                                }
+                                return hours;
+                            }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="trainerId"
+                        label="Huấn luyện viên"
+                    >
+                        <Input readOnly className="w-full bg-gray-50" />
+                    </Form.Item>
+                </Form>
+            </Modal>
 
 
             <ToastContainer

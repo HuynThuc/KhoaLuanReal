@@ -30,7 +30,7 @@ const ExploreSection = () => {
   return (
     <section className="max-w-7xl mx-auto px-4 py-20">
       <div className="flex justify-between items-center mb-12">
-        <h2 className="text-4xl font-semibold">KHÁM PHÁ CHƯƠNG TRÌNH CỦA CHÚNG TÔI</h2>
+        <h2 className="text-4xl text-center font-semibold">KHÁM PHÁ CHƯƠNG TRÌNH CỦA CHÚNG TÔI</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {exploreData.map((item, index) => (

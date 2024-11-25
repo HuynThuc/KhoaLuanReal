@@ -22,6 +22,7 @@ import WeeklySchedule from './component/WeeklySchedule/WeeklySchedule.js';
 import ThankYouComponent from './component/Thank/thank.js';
 import Profile from './component/Profile/profile.js';
 
+
 const Layout = () => {
   const location = useLocation();
   const showHeaderFooter = !['/login', '/register',  '/admin-2', '/thank',].includes(location.pathname);

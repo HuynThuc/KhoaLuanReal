@@ -19,22 +19,22 @@ const BMICalculator = () => {
   };
 
   return (
-    <div className=" relative bg-custom text-white py-28">
+    <div className="relative bg-custom text-white py-28">
       {/* Background Image */}
-      <div 
-    className="absolute inset-0 z-0 opacity-50" 
-    style={{
-      backgroundImage: "url('/images/bmi.jpg')", // Thay đổi đường dẫn ở đây
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat'
-    }}
-  />
+      <div
+        className="absolute inset-0 z-0 opacity-50"
+        style={{
+          backgroundImage: "url('/images/bmi.jpg')", // Thay đổi đường dẫn ở đây
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
       
-      <div className="relative z-10 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-8">
+      <div className="relative z-10 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-8 px-4 md:px-0">
         {/* Left Column */}
-        <div className="w-full md:w-1/2">
-          <h1 className="text-3xl font-bold mb-4">TÍNH CHỈ SỐ BMI CỦA BẠN</h1>
+        <div className="w-full md:w-1/2 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">TÍNH CHỈ SỐ BMI CỦA BẠN</h1>
           <p className="text-gray-300 mb-6">
             Chỉ số khối cơ thể hay còn gọi là BMI được dùng để xác định mức độ gầy hay béo của cơ thể
             thông qua chiều cao và cân nặng. Để có thể xác định được chỉ số BMI của bạn, vui lòng trả lời
@@ -42,32 +42,28 @@ const BMICalculator = () => {
           </p>
 
           <form onSubmit={calculateBMI} className="space-y-6">
-            <div className="flex gap-4">
-              <div className="flex flex-col">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col w-full sm:w-1/2">
                 <label className="text-sm text-gray-400 mb-1">Cân nặng (kg)</label>
                 <input
-                
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
-                  
-                  className="w-32 px-4 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-orange-500"
                 />
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col w-full sm:w-1/2">
                 <label className="text-sm text-gray-400 mb-1">Chiều cao (cm)</label>
                 <input
-                 
                   value={height}
                   onChange={(e) => setHeight(e.target.value)}
-                 
-                  className="w-32 px-4 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-orange-500"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition-colors"
+              className="w-full sm:w-auto bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition-colors mt-6"
             >
               XEM KẾT QUẢ
             </button>
@@ -81,8 +77,8 @@ const BMICalculator = () => {
         </div>
 
         {/* Right Column - BMI Table */}
-        <div className="w-full md:w-1/2 flex justify-center">
-          <div className="bg-orange-500 rounded-lg overflow-hidden max-w-md">
+        <div className="w-full md:w-1/2 flex justify-center mt-8 md:mt-0">
+          <div className="bg-orange-500 rounded-lg overflow-hidden w-full sm:w-3/4 lg:w-1/2">
             <table className="w-full">
               <thead>
                 <tr>

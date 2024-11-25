@@ -30,8 +30,9 @@ const ServicesSection = () => {
       <div className="max-w-7xl mx-auto px-4">
         {/* Section Title */}
         <div className="text-center mb-16">
-          <span className="text-orange-500 text-sm uppercase tracking-wider">WHAT WE DO?</span>
-          <h2 className="text-white text-4xl md:text-5xl font-bold mt-2">PUSH YOUR LIMITS FORWARD</h2>
+        <span className="text-orange-500 text-sm uppercase tracking-wider">CHÚNG TÔI LÀM GÌ?</span>
+<h2 className="text-white text-4xl md:text-5xl font-bold mt-2">VƯỢT QUA MỌI GIỚI HẠN</h2>
+
         </div>
 
         {/* Services Grid */}
@@ -60,7 +61,7 @@ const ServicesSection = () => {
                   </p>
                   <button 
                     onClick={() => handleExploreClick(service.id)} 
-                    className="text-white hover:text-orange-500 mt-4">EXPLORE</button>
+                    className="text-white hover:text-orange-500 mt-4">CHI TIẾT</button>
                 </div>
               </div>
             </div>

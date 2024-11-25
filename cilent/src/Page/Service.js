@@ -8,7 +8,7 @@ const defaultImage = '/images/dichvu-dt.jpg'; // Thay thế bằng đường d�
 function Service() {
   return (
     <div className="bg-custom text-white">
-      <BannerService defaultImage={defaultImage} serviceName="Dịch vụ của chúng tôi" />  {/* Sử dụng hình ảnh mặc định */}
+      <BannerService defaultImage={defaultImage} serviceName="" />  {/* Sử dụng hình ảnh mặc định */}
       <ServiceCard />
       <RegistrationForm/>
     </div>

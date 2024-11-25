@@ -6,7 +6,7 @@ import BannerService from "../component/Banner/bannerService";
 import { useLocation, useNavigate } from 'react-router-dom';
 
 
-const bookingImage = '/images/anh-mo-ta.png'; // Hình ảnh mặc định cho trang đặt chỗ
+const bookingImage = '/images/booking.jpg'; // Hình ảnh mặc định cho trang đặt chỗ
 
 function Checkout() {
   const location = useLocation();

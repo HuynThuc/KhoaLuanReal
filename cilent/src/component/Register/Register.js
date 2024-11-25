@@ -71,7 +71,12 @@ const Register = () => {
       })
       .catch((err) => {
         console.error('Request failed:', err);
-        alert('Có lỗi xảy ra khi gửi yêu cầu.');
+        // Kiểm tra nếu lỗi từ backend là lỗi email đã tồn tại
+        if (err.response && err.response.data.Message) {
+          alert(err.response.data.Message);  // Hiển thị lỗi email trùng
+        } else {
+          alert('Có lỗi xảy ra khi gửi yêu cầu.');
+        }
       });
     
       
